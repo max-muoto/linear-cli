@@ -1,34 +1,58 @@
 pub mod linear;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use inquire::{Select, Text};
 
 #[derive(Parser)]
+#[command(author, version, about, long_about = None)]
 struct Cli {
-    pattern: Option<String>,
-    path: Option<std::path::PathBuf>,
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    // Create a Linear issue.
+    Create {
+        #[arg(short, long)]
+        name: String,
+        #[arg(short, long)]
+        points: i64,
+        #[arg(short, long)]
+        team: String,
+    },
 }
 
 #[tokio::main]
 async fn main() {
-    env_logger::init();
-    let args = Cli::parse();
+    let cli = Cli::parse();
     let linear_client = linear::LinearClient::new();
 
-    // Check if both pattern and path are None, indicating no arguments were provided
-    if args.pattern.is_none() && args.path.is_none() {
-        selection_menu(&linear_client).await;
-    } else {
-        if let Some(pattern) = &args.pattern {
-            println!("Pattern: {:?}", pattern);
-        } else {
-            println!("No pattern provided.");
+    match &cli.command {
+        Some(Commands::Create { name, points, team }) => {
+            let teams = linear_client
+                .get_teams()
+                .await
+                .expect("Failed to get teams.");
+            let team_result = teams
+                .iter()
+                .filter(|curr_team| curr_team.name == team.as_str())
+                .try_fold(None, |acc, team| match acc {
+                    None => Ok(Some(team)),
+                    Some(_) => Err("Multiple teams with the same name found".to_string()),
+                });
+            let select_team = match team_result {
+                Ok(Some(team)) => Ok(team),
+                Ok(None) => Err("No team found with the given name".to_string()),
+                Err(e) => Err(e),
+            };
+            linear_client
+                .create_issue(name.to_string(), *points, select_team.unwrap())
+                .await;
         }
-
-        if let Some(path) = &args.path {
-            println!("Path: {:?}", path);
-        } else {
-            println!("No path provided.");
+        None => {
+            // Default to the selection menu if no subcommand is given.
+            selection_menu(&linear_client).await;
         }
     }
 }
@@ -49,7 +73,7 @@ async fn create_issue_menu(linear_client: &linear::LinearClient) {
             Ok(selected_points) => match name {
                 Ok(issue_name) => {
                     println!("Creating issue...");
-                    let issue = linear_client
+                    linear_client
                         .create_issue(issue_name, selected_points, &selected_team)
                         .await;
                 }
@@ -61,10 +85,6 @@ async fn create_issue_menu(linear_client: &linear::LinearClient) {
     }
 }
 
-async fn view_issues() -> String {
-    return std::string::String::from("Viewing issues.");
-}
-
 /// Creates a menu for the user to select an option from.
 async fn selection_menu(linear_client: &linear::LinearClient) {
     let options = vec!["Create an Issue", "View Your Issues"];
@@ -73,8 +93,7 @@ async fn selection_menu(linear_client: &linear::LinearClient) {
     match select.prompt() {
         Ok(selected) => match selected {
             "Create an Issue" => {
-                println!("Creating an issue...");
-                let issue = create_issue_menu(&linear_client).await;
+                create_issue_menu(&linear_client).await;
             }
             "View Your Issues" => {
                 println!("Viewing your issues...");
