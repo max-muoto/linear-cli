@@ -1,0 +1,8 @@
+query Teams {
+  teams {
+    nodes {
+      id
+      name
+    }
+  }
+}
