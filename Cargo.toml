@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
+graphql_client = "0.13.0"
+inquire = "0.6.2"
