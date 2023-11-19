@@ -9,12 +9,14 @@ struct Cli {
     path: Option<std::path::PathBuf>,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Cli::parse();
+    let linear_client = linear::LinearClient::new();
 
     // Check if both pattern and path are None, indicating no arguments were provided
     if args.pattern.is_none() && args.path.is_none() {
-        selection_menu();
+        selection_menu(&linear_client).await;
     } else {
         if let Some(pattern) = &args.pattern {
             println!("Pattern: {:?}", pattern);
@@ -31,16 +33,20 @@ fn main() {
 }
 
 /// Create an issue for the given team.
-fn create_issue_menu() {
-    let options = vec!["Create an Issue", "View Your Issues"];
+async fn create_issue_menu(linear_client: &linear::LinearClient) {
+    let teams = linear_client
+        .get_teams()
+        .await
+        .expect("Failed to get teams.");
+    let select = Select::new("Choose a team", teams);
 }
 
-fn view_issues() -> String {
+async fn view_issues() -> String {
     return std::string::String::from("Viewing issues.");
 }
 
 /// Creates a menu for the user to select an option from.
-fn selection_menu() {
+async fn selection_menu(linear_client: &linear::LinearClient) {
     let options = vec!["Create an Issue", "View Your Issues"];
     let select = Select::new("Choose an option", options);
 
@@ -48,7 +54,7 @@ fn selection_menu() {
         Ok(selected) => match selected {
             "Create an Issue" => {
                 println!("Creating an issue...");
-                let issue = create_issue_menu();
+                let issue = create_issue_menu(&linear_client).await;
             }
             "View Your Issues" => {
                 println!("Viewing your issues...");

@@ -1,11 +1,17 @@
 use graphql_client::{GraphQLQuery, QueryBody, Response};
-use std::env;
+use std::{env, fmt};
 
 const API_ROOT: &str = "https://api.linear.app/graphql";
 
-struct Team {
+pub struct Team {
     id: String,
     name: String,
+}
+
+impl fmt::Display for Team {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Team ID: {}, Name: {}", self.id, self.name)
+    }
 }
 
 struct User {
@@ -31,13 +37,13 @@ struct Issue {
 )]
 pub struct Teams;
 
-struct LinearClient {
+pub struct LinearClient {
     api_key: String,
     client: reqwest::Client,
 }
 
 impl LinearClient {
-    async fn new() -> Self {
+    pub fn new() -> Self {
         let api_key = env::var("LINEAR_API_KEY").expect("LINEAR_API_KEY not found in .env file");
         let client = reqwest::Client::new();
         LinearClient { api_key, client }
@@ -60,7 +66,7 @@ impl LinearClient {
     }
 
     /// Gets a list of teams from the Linear API.
-    async fn get_teams(&self) -> Result<Vec<Team>, Box<dyn std::error::Error>> {
+    pub async fn get_teams(&self) -> Result<Vec<Team>, Box<dyn std::error::Error>> {
         let req_body = Teams::build_query(teams::Variables {});
         let res = self.make_request(req_body);
         let response_body: Response<teams::ResponseData> = res.await?.json().await?;
