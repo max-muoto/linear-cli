@@ -34,21 +34,23 @@ async fn main() {
                 .get_teams()
                 .await
                 .expect("Failed to get teams.");
-            let team_result = teams
+            let team = teams
                 .iter()
                 .filter(|curr_team| curr_team.name == team.as_str())
                 .try_fold(None, |acc, team| match acc {
                     None => Ok(Some(team)),
                     Some(_) => Err("Multiple teams with the same name found".to_string()),
                 });
-            let selected_team = match team_result {
-                Ok(Some(team)) => Ok(team),
-                Ok(None) => Err("No team found with the given name".to_string()),
-                Err(e) => Err(e),
-            };
-            linear_client
-                .create_issue(name.to_string(), *points, selected_team.unwrap())
-                .await;
+            match team {
+                Ok(Some(team)) => {
+                    println!("Creating issue...");
+                    linear_client
+                        .create_issue(name.to_string(), *points, &team)
+                        .await;
+                }
+                Ok(None) => println!("No team with the given name found."),
+                Err(err) => println!("{}", err),
+            }
         }
         None => {
             // Default to the selection menu if no subcommand is given.
