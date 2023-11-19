@@ -1,4 +1,4 @@
-use graphql_client::GraphQLQuery;
+use graphql_client::{GraphQLQuery, QueryBody, Response};
 use std::env;
 
 const API_ROOT: &str = "https://api.linear.app/graphql";
@@ -46,7 +46,7 @@ impl LinearClient {
     /// Makes a request to the Linear API with a given query.
     async fn make_request(
         &self,
-        query: graphql_client::QueryBody<Any>,
+        query: QueryBody<teams::Variables>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let request = self
             .client
@@ -60,9 +60,22 @@ impl LinearClient {
     }
 
     /// Gets a list of teams from the Linear API.
-    async fn get_teams(&self) {
+    async fn get_teams(&self) -> Result<Vec<Team>, Box<dyn std::error::Error>> {
         let req_body = Teams::build_query(teams::Variables {});
-        let mut res = self.make_request(req_body).await?;
-        // let response_body: Response<teams::ResponseData> = res.json().await?;
+        let res = self.make_request(req_body);
+        let response_body: Response<teams::ResponseData> = res.await?.json().await?;
+        let response_data = response_body.data.expect("No response data found.");
+
+        let teams = response_data
+            .teams
+            .nodes
+            .into_iter()
+            .map(|team_data| Team {
+                id: team_data.id,
+                name: team_data.name,
+            })
+            .collect();
+
+        Ok(teams)
     }
 }
