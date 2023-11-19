@@ -56,7 +56,7 @@ impl LinearClient {
     ) -> Result<reqwest::Response, reqwest::Error> {
         let request = self
             .client
-            .post(API_ROOT)
+            .get(API_ROOT)
             .header("Authorization", format!("Bearer {}", self.api_key))
             .json(&query)
             .send()
