@@ -97,12 +97,18 @@ impl LinearClient {
     }
 
     /// Creates an issue for the given team.
-    pub async fn create_issue(&self, name: String, points: i64, team: &Team) {
+    pub async fn create_issue(&self, name: String, points: i64, team: &Team) -> String {
         let req_body = IssueCreate::build_query(issue_create::Variables {
             title: name,
             points,
             team_id: team.id.clone(),
         });
-        let _ = self.make_request(req_body).await;
+        let res = self
+            .make_request(req_body)
+            .await
+            .expect("Failed to create issue.");
+        let response_body: Response<issue_create::ResponseData> = res.json().await.unwrap();
+        let response_data = response_body.data.expect("No response data found.");
+        response_data.issue_create.issue.unwrap().url
     }
 }

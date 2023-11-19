@@ -1,6 +1,7 @@
 pub mod linear;
 
 use clap::{Parser, Subcommand};
+use clipboard::{ClipboardContext, ClipboardProvider};
 use inquire::{Select, Text};
 
 #[derive(Parser)]
@@ -20,6 +21,8 @@ enum Commands {
         points: i64,
         #[arg(short, long)]
         team: String,
+        #[arg(short, long)]
+        copy: bool,
     },
 }
 
@@ -27,9 +30,15 @@ enum Commands {
 async fn main() {
     let cli = Cli::parse();
     let linear_client = linear::LinearClient::new();
+    let mut ctx: ClipboardContext = ClipboardProvider::new().unwrap();
 
     match &cli.command {
-        Some(Commands::Create { name, points, team }) => {
+        Some(Commands::Create {
+            name,
+            points,
+            team,
+            copy,
+        }) => {
             let teams = linear_client
                 .get_teams()
                 .await
@@ -44,9 +53,13 @@ async fn main() {
             match team {
                 Ok(Some(team)) => {
                     println!("Creating issue...");
-                    linear_client
+                    let url = linear_client
                         .create_issue(name.to_string(), *points, &team)
                         .await;
+                    if *copy {
+                        println!("Coped URL to clipboard.");
+                        let _ = ctx.set_contents(url.to_owned());
+                    }
                 }
                 Ok(None) => println!("No team with the given name found."),
                 Err(err) => println!("{}", err),
