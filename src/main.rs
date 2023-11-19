@@ -41,13 +41,13 @@ async fn main() {
                     None => Ok(Some(team)),
                     Some(_) => Err("Multiple teams with the same name found".to_string()),
                 });
-            let select_team = match team_result {
+            let selected_team = match team_result {
                 Ok(Some(team)) => Ok(team),
                 Ok(None) => Err("No team found with the given name".to_string()),
                 Err(e) => Err(e),
             };
             linear_client
-                .create_issue(name.to_string(), *points, select_team.unwrap())
+                .create_issue(name.to_string(), *points, selected_team.unwrap())
                 .await;
         }
         None => {
