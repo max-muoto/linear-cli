@@ -1,16 +1,18 @@
 use graphql_client::{GraphQLQuery, QueryBody, Response};
+use log::log_enabled;
 use std::{env, fmt};
 
 const API_ROOT: &str = "https://api.linear.app/graphql";
 
+#[derive(Debug)]
 pub struct Team {
-    id: String,
-    name: String,
+    pub id: String,
+    pub name: String,
 }
 
 impl fmt::Display for Team {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Team ID: {}, Name: {}", self.id, self.name)
+        write!(f, "{}", self.name)
     }
 }
 
@@ -37,6 +39,13 @@ struct Issue {
 )]
 pub struct Teams;
 
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/schemas/linear_schema.json",
+    query_path = "src/queries/create_issue.graphql"
+)]
+pub struct IssueCreate;
+
 pub struct LinearClient {
     api_key: String,
     client: reqwest::Client,
@@ -45,23 +54,25 @@ pub struct LinearClient {
 impl LinearClient {
     pub fn new() -> Self {
         let api_key = env::var("LINEAR_API_KEY").expect("LINEAR_API_KEY not found in .env file");
-        let client = reqwest::Client::new();
+        let client = reqwest::Client::builder()
+            .connection_verbose(log_enabled!(log::Level::Trace))
+            .build()
+            .expect("Failed to construct client");
         LinearClient { api_key, client }
     }
 
     /// Makes a request to the Linear API with a given query.
-    async fn make_request(
+    async fn make_request<V: serde::Serialize>(
         &self,
-        query: QueryBody<teams::Variables>,
+        query: QueryBody<V>,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let request = self
             .client
             .post(API_ROOT)
-            .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Authorization", &self.api_key)
             .json(&query)
             .send()
             .await?;
-
         Ok(request)
     }
 
@@ -83,5 +94,15 @@ impl LinearClient {
             .collect();
 
         Ok(teams)
+    }
+
+    /// Creates an issue for the given team.
+    pub async fn create_issue(&self, name: String, points: i64, team: &Team) {
+        let req_body = IssueCreate::build_query(issue_create::Variables {
+            title: name,
+            points,
+            team_id: team.id.clone(),
+        });
+        let _ = self.make_request(req_body).await;
     }
 }

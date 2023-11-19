@@ -1,7 +1,7 @@
 pub mod linear;
 
 use clap::Parser;
-use inquire::Select;
+use inquire::{Select, Text};
 
 #[derive(Parser)]
 struct Cli {
@@ -11,6 +11,7 @@ struct Cli {
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
     let args = Cli::parse();
     let linear_client = linear::LinearClient::new();
 
@@ -38,7 +39,26 @@ async fn create_issue_menu(linear_client: &linear::LinearClient) {
         .get_teams()
         .await
         .expect("Failed to get teams.");
-    let select = Select::new("Choose a team", teams);
+
+    let select_team = Select::new("Choose a team", teams);
+    let select_points = Select::new("Choose a point value", vec![1, 2, 3, 5, 8]);
+    let name = Text::new("What is the name of the issue?").prompt();
+
+    match select_team.prompt() {
+        Ok(selected_team) => match select_points.prompt() {
+            Ok(selected_points) => match name {
+                Ok(issue_name) => {
+                    println!("Creating issue...");
+                    let issue = linear_client
+                        .create_issue(issue_name, selected_points, &selected_team)
+                        .await;
+                }
+                Err(_) => println!("An error occurred while getting the issue name."),
+            },
+            Err(_) => println!("An error occurred while selecting a point value."),
+        },
+        Err(_) => println!("An error occurred while selecting a team."),
+    }
 }
 
 async fn view_issues() -> String {

@@ -1,0 +1,9 @@
+mutation IssueCreate($title: String!, $points: Int!, $teamId: String!) {
+  issueCreate(input: { title: $title, estimate: $points, teamId: $teamId }) {
+    success
+    issue {
+      id
+      title
+    }
+  }
+}
