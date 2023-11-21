@@ -10,6 +10,12 @@ pub struct Team {
     pub name: String,
 }
 
+pub struct WorkflowState {
+    pub name: String,
+    pub id: String,
+    pub team_id: String,
+}
+
 impl fmt::Display for Team {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.name)
@@ -45,6 +51,13 @@ pub struct Teams;
     query_path = "src/queries/create_issue.graphql"
 )]
 pub struct IssueCreate;
+
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/schemas/linear_schema.json",
+    query_path = "src/queries/workflow_states.graphql"
+)]
+pub struct WorkflowStates;
 
 pub struct LinearClient {
     api_key: String,
@@ -110,5 +123,33 @@ impl LinearClient {
         let response_body: Response<issue_create::ResponseData> = res.json().await.unwrap();
         let response_data = response_body.data.expect("No response data found.");
         response_data.issue_create.issue.unwrap().url
+    }
+
+    /// Get all workflow states, for a specific team if a `team_id` is provided.
+    pub async fn get_workflows_states(
+        &self,
+        team_id: Option<String>,
+    ) -> Result<Vec<WorkflowState>, Box<dyn std::error::Error>> {
+        let req_body = WorkflowStates::build_query(workflow_states::Variables {});
+        let res = self.make_request(req_body);
+        let response_body: Response<workflow_states::ResponseData> = res.await?.json().await?;
+        let response_data = response_body.data.expect("No response data found");
+
+        let states = response_data
+            .workflow_states
+            .nodes
+            .into_iter()
+            .filter(|workflow_state| match &team_id {
+                Some(team_id) => workflow_state.team.id == *team_id,
+                None => true,
+            })
+            .map(|workflow_state| WorkflowState {
+                id: workflow_state.id,
+                name: workflow_state.name,
+                team_id: workflow_state.team.id,
+            })
+            .collect();
+
+        Ok(states)
     }
 }

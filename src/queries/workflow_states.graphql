@@ -1,0 +1,11 @@
+query WorkflowStates {
+  workflowStates {
+    nodes {
+      name
+      id
+      team {
+        id
+      }
+    }
+  }
+}
