@@ -2,7 +2,7 @@ pub mod linear;
 
 use clap::{Parser, Subcommand};
 use clipboard::{ClipboardContext, ClipboardProvider};
-use inquire::{Select, Text};
+use inquire::{MultiSelect, Select, Text};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -72,7 +72,7 @@ async fn main() {
     }
 }
 
-/// Create an issue for the given team.
+/// Menu to create an issue.
 async fn create_issue_menu(linear_client: &linear::LinearClient) {
     let teams = linear_client
         .get_teams()
@@ -100,6 +100,34 @@ async fn create_issue_menu(linear_client: &linear::LinearClient) {
     }
 }
 
+/// Menu to view issues for all temas.
+async fn view_issues_menu(linear_client: &linear::LinearClient) {
+    let teams = linear_client
+        .get_teams()
+        .await
+        .expect("Failed to get teams.");
+
+    let select_team = Select::new("Choose a team", teams);
+
+    match select_team.prompt() {
+        Ok(selected_team) => {
+            let workflow_states = linear_client
+                .get_workflows_states(Some(selected_team.id))
+                .await
+                .expect("Failed to get workflow states.");
+            let select_workflow_state =
+                MultiSelect::new("Choose a workflow state", workflow_states);
+            match select_workflow_state.prompt() {
+                Ok(selected_workflow_state) => {
+                    println!("Viewing issues...");
+                }
+                Err(_) => println!("An error occurred while selecting a workflow state."),
+            }
+        }
+        Err(_) => println!("An error occurred while selecting a team."),
+    }
+}
+
 /// Creates a menu for the user to select an option from.
 async fn selection_menu(linear_client: &linear::LinearClient) {
     let options = vec!["Create an Issue", "View Your Issues"];
@@ -111,7 +139,7 @@ async fn selection_menu(linear_client: &linear::LinearClient) {
                 create_issue_menu(&linear_client).await;
             }
             "View Your Issues" => {
-                println!("Viewing your issues...");
+                view_issues_menu(&linear_client).await;
             }
             _ => println!("Unknown option selected."),
         },

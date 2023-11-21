@@ -22,6 +22,12 @@ impl fmt::Display for Team {
     }
 }
 
+impl fmt::Display for WorkflowState {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
 struct User {
     id: String,
     name: String,
