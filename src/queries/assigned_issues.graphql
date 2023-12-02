@@ -1,0 +1,14 @@
+query AssignedIssues {
+  viewer {
+    assignedIssues {
+      nodes {
+        id
+        title
+        team {
+          name
+          id
+        }
+      }
+    }
+  }
+}

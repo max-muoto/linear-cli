@@ -120,6 +120,13 @@ async fn view_issues_menu(linear_client: &linear::LinearClient) {
             match select_workflow_state.prompt() {
                 Ok(selected_workflow_state) => {
                     println!("Viewing issues...");
+                    let issues = linear_client
+                        .get_assigned_issues()
+                        .await
+                        .expect("Failed to get issues.");
+                    for issue in issues {
+                        println!("{}", issue.title);
+                    }
                 }
                 Err(_) => println!("An error occurred while selecting a workflow state."),
             }

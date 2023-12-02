@@ -34,14 +34,10 @@ struct User {
     is_me: bool,
 }
 
-struct Issue {
+pub struct Issue {
     id: String,
-    title: String,
-    description: String,
+    pub title: String,
     team: Team,
-    creator: User,
-    assignee: User,
-    status: String,
 }
 
 #[derive(GraphQLQuery)]
@@ -72,6 +68,13 @@ pub struct WorkflowStates;
 )]
 pub struct CurrentUser;
 
+#[derive(GraphQLQuery)]
+#[graphql(
+    schema_path = "src/schemas/linear_schema.json",
+    query_path = "src/queries/assigned_issues.graphql"
+)]
+pub struct AssignedIssues;
+
 pub struct LinearClient {
     api_key: String,
     client: reqwest::Client,
@@ -100,20 +103,6 @@ impl LinearClient {
             .send()
             .await?;
         Ok(request)
-    }
-
-    /// Get the id for the currently authenticated user.
-    async fn get_authed_user(&self) -> Result<User, Box<dyn std::error::Error>> {
-        let req_body = CurrentUser::build_query(current_user::Variables {});
-        let res = self.make_request(req_body);
-        let response_body: Response<current_user::ResponseData> = res.await?.json().await?;
-        let response_data = response_body.data.expect("No response data found.");
-
-        Ok(User {
-            id: response_data.viewer.id,
-            name: response_data.viewer.name,
-            is_me: true,
-        })
     }
 
     /// Gets a list of teams from the Linear API.
@@ -178,5 +167,32 @@ impl LinearClient {
             .collect();
 
         Ok(states)
+    }
+
+    /// Get issues for the currently authenticated user.
+    pub async fn get_assigned_issues(&self) -> Result<Vec<Issue>, Box<dyn std::error::Error>> {
+        let req_body = AssignedIssues::build_query(assigned_issues::Variables {});
+        let res = self.make_request(req_body);
+        let response_body: Response<assigned_issues::ResponseData> = res.await?.json().await?;
+        let response_data = response_body.data.expect("No response data found");
+
+        let issues = response_data
+            .viewer
+            .assigned_issues
+            .nodes
+            .into_iter()
+            .map(|issue| {
+                let team = Team {
+                    name: issue.team.name,
+                    id: String::from("4"),
+                };
+                Issue {
+                    id: issue.id,
+                    title: issue.title,
+                    team,
+                }
+            })
+            .collect();
+        Ok(issues)
     }
 }
