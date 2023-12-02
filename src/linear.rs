@@ -35,9 +35,9 @@ struct User {
 }
 
 pub struct Issue {
-    id: String,
+    pub id: String,
     pub title: String,
-    team: Team,
+    pub team: Team,
 }
 
 #[derive(GraphQLQuery)]

@@ -1,8 +1,11 @@
+pub mod formatting;
 pub mod linear;
 
 use clap::{Parser, Subcommand};
 use clipboard::{ClipboardContext, ClipboardProvider};
 use inquire::{MultiSelect, Select, Text};
+
+use crate::formatting::print_issues;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -124,9 +127,7 @@ async fn view_issues_menu(linear_client: &linear::LinearClient) {
                         .get_assigned_issues()
                         .await
                         .expect("Failed to get issues.");
-                    for issue in issues {
-                        println!("{}", issue.title);
-                    }
+                    print_issues(issues);
                 }
                 Err(_) => println!("An error occurred while selecting a workflow state."),
             }
