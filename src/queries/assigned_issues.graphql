@@ -4,6 +4,7 @@ query AssignedIssues {
       nodes {
         id
         title
+        url
         team {
           name
           id

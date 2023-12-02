@@ -38,6 +38,7 @@ pub struct Issue {
     pub id: String,
     pub title: String,
     pub team: Team,
+    pub url: String,
 }
 
 #[derive(GraphQLQuery)]
@@ -189,6 +190,7 @@ impl LinearClient {
                 Issue {
                     id: issue.id,
                     title: issue.title,
+                    url: issue.url,
                     team,
                 }
             })
