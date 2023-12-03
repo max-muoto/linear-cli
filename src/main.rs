@@ -27,6 +27,8 @@ enum Commands {
         #[arg(short, long)]
         copy: bool,
     },
+    // View assigned issues.
+    View,
 }
 
 #[tokio::main]
@@ -67,6 +69,9 @@ async fn main() {
                 Ok(None) => println!("No team with the given name found."),
                 Err(err) => println!("{}", err),
             }
+        }
+        Some(Commands::View {}) => {
+            view_issues_menu(&linear_client).await;
         }
         None => {
             // Default to the selection menu if no subcommand is given.
