@@ -2,6 +2,12 @@
 name = "linear-cli"
 version = "0.1.0"
 edition = "2021"
+authors = ["Max Muoto <maxmuoto@gmail.com>"]
+description = "A command line interface for Linear."
+homepage = "https://github.com/max-muoto/linear-cli"
+repository = "https://github.com/max-muoto/linear-cli"
+keywords = ["linear", "cli"]
+categories = ["command-line-utilities", "command-line-interface"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
