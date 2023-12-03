@@ -10,11 +10,11 @@ To configure access with the Linear API, set an environment variable, `LINEAR_AP
 
 Currently two commands are supported:
 
-- `ln create`: Create issue for a given team.
-- `ln view`: View currently assigned issues.
+- `li create`: Create issue for a given team.
+- `li view`: View currently assigned issues.
 
 To view all available commands:
 
 ```
-ln help
+li help
 ```
