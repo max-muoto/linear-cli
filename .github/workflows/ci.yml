@@ -12,7 +12,7 @@ env:
 jobs:
   build:
     name: "cargo build"
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Build
@@ -20,7 +20,7 @@ jobs:
 
   cargo-fmt:
     name: "cargo fmt"
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: "Check formatting"
@@ -29,7 +29,7 @@ jobs:
 
   cargo-test:
     name: "cargo test"
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: "Run tests"
