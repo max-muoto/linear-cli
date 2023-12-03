@@ -1,4 +1,4 @@
-## Linear Cli
+## Linear CLI
 
 A [Linear](https://linear.app/) CLI tool built in Rust.
 

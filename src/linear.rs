@@ -28,12 +28,6 @@ impl fmt::Display for WorkflowState {
     }
 }
 
-struct User {
-    id: String,
-    name: String,
-    is_me: bool,
-}
-
 pub struct Issue {
     pub id: String,
     pub title: String,
