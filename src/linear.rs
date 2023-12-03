@@ -37,7 +37,8 @@ struct User {
 pub struct Issue {
     pub id: String,
     pub title: String,
-    pub team: Team,
+    pub team_name: String,
+    pub state_name: String,
     pub url: String,
 }
 
@@ -171,7 +172,11 @@ impl LinearClient {
     }
 
     /// Get issues for the currently authenticated user.
-    pub async fn get_assigned_issues(&self) -> Result<Vec<Issue>, Box<dyn std::error::Error>> {
+    pub async fn get_assigned_issues(
+        &self,
+        team_id: Option<String>,
+        workflow_states: Option<Vec<WorkflowState>>,
+    ) -> Result<Vec<Issue>, Box<dyn std::error::Error>> {
         let req_body = AssignedIssues::build_query(assigned_issues::Variables {});
         let res = self.make_request(req_body);
         let response_body: Response<assigned_issues::ResponseData> = res.await?.json().await?;
@@ -182,17 +187,27 @@ impl LinearClient {
             .assigned_issues
             .nodes
             .into_iter()
-            .map(|issue| {
-                let team = Team {
-                    name: issue.team.name,
-                    id: String::from("4"),
+            .filter(|issue| {
+                let workflow_state_match = match &workflow_states {
+                    Some(workflow_states) => workflow_states
+                        .iter()
+                        .any(|workflow_state| workflow_state.id == issue.state.id),
+                    None => true,
                 };
-                Issue {
-                    id: issue.id,
-                    title: issue.title,
-                    url: issue.url,
-                    team,
-                }
+
+                let team_id_match = match &team_id {
+                    Some(team_id) => issue.team.id == *team_id,
+                    None => true,
+                };
+
+                workflow_state_match && team_id_match
+            })
+            .map(|issue| Issue {
+                id: issue.id,
+                title: issue.title,
+                url: issue.url,
+                team_name: issue.team.name,
+                state_name: issue.state.name,
             })
             .collect();
         Ok(issues)

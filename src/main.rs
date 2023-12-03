@@ -115,16 +115,19 @@ async fn view_issues_menu(linear_client: &linear::LinearClient) {
     match select_team.prompt() {
         Ok(selected_team) => {
             let workflow_states = linear_client
-                .get_workflows_states(Some(selected_team.id))
+                .get_workflows_states(Some(selected_team.id.clone()))
                 .await
                 .expect("Failed to get workflow states.");
             let select_workflow_state =
                 MultiSelect::new("Choose a workflow state", workflow_states);
             match select_workflow_state.prompt() {
-                Ok(selected_workflow_state) => {
+                Ok(selected_workflow_states) => {
                     println!("Viewing issues...");
                     let issues = linear_client
-                        .get_assigned_issues()
+                        .get_assigned_issues(
+                            Some(selected_team.id.clone()),
+                            Some(selected_workflow_states),
+                        )
                         .await
                         .expect("Failed to get issues.");
                     print_issues(issues);

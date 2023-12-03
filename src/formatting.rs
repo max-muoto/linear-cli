@@ -16,12 +16,16 @@ struct IssueDisplay {
 
     #[tabled(rename = "Team")]
     team_name: String,
+
+    #[tabled(rename = "State")]
+    state_name: String,
 }
 
 impl From<Issue> for IssueDisplay {
     fn from(issue: Issue) -> Self {
         IssueDisplay {
-            team_name: issue.team.name,
+            team_name: issue.team_name,
+            state_name: issue.state_name,
             link: format_as_hyperlink(&issue.url, &issue.title),
         }
     }

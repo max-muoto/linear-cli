@@ -5,6 +5,10 @@ query AssignedIssues {
         id
         title
         url
+        state {
+          name
+          id
+        }
         team {
           name
           id
